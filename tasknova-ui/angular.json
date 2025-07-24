@@ -18,6 +18,7 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": "../backend/frontend",
+            "baseHref": "/static/",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -49,9 +50,7 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all",
-              "baseHref": "/",
-              "outputPath": "../backend/frontend"
+              "outputHashing": "all"
             },
             "development": {
               "optimization": false,
