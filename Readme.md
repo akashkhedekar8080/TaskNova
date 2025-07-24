@@ -10,7 +10,9 @@ TaskNova/
 ├── backend/ # Django backend
 │ ├── account/ # User registration & login (JWT)
 │ ├── task/ # Task model & views
+| |__ frontend / # Angular serve build (production build output)
 │ └── taskmanager/ # Main project (settings, URLs, WSGI)
+| 
 ├── tasknova-ui/ # Angular frontend
 │ ├── src/
 │ │ ├── app/
@@ -25,7 +27,6 @@ TaskNova/
 │ │ │ ├── employee/ # Employee views
 │ │ │ └── task/ # Task CRUD
 └── README.md
-
 
 ---
 
@@ -58,6 +59,13 @@ Register/login via API
 View only their own tasks
 
 Update only task status
+
+⚙️ Serving Angular Build via Django
+1. Build Angular for Production
+bash
+cd tasknova-ui
+ng build --configuration production
+This creates output in backend/frontend/.
 
 🌐 Frontend (Angular)
 Path: /tasknova-ui
