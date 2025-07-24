@@ -1,0 +1,48 @@
+<mat-toolbar color="primary" class="header-toolbar">
+  <div class="toolbar-content">
+    <!-- Logo/Brand -->
+    <div class="brand-section" routerLink="/" style="cursor: pointer">
+      <mat-icon class="brand-icon">business</mat-icon>
+      <span class="brand-text">TaskNova</span>
+    </div>
+
+    <!-- Navigation Links -->
+    @if(isAuthenticated){
+    <nav class="nav-links">
+      <a mat-button routerLink="/" routerLinkActive="active-link">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard
+      </a>
+    </nav>
+    }
+
+    <!-- User Section -->
+    <div class="user-section">
+      @if(isAuthenticated ){
+      <ng-container>
+        <!-- Notifications -->
+        <button mat-button (click)="logout()" class="auth-btn">
+          <mat-icon>logout</mat-icon>
+          Logout
+        </button>
+      </ng-container>
+      }@else{
+      <ng-container>
+        <a mat-button routerLink="/login" class="auth-btn">
+          <mat-icon>login</mat-icon>
+          Login
+        </a>
+        <a
+          mat-raised-button
+          color="accent"
+          routerLink="/register"
+          class="auth-btn"
+        >
+          <mat-icon>person_add</mat-icon>
+          Register
+        </a>
+      </ng-container>
+      }
+    </div>
+  </div>
+</mat-toolbar>

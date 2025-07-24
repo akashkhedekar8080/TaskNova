@@ -1,0 +1,363 @@
+<div class="employee-container">
+  <mat-card class="employee-header">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>people</mat-icon>
+        Employee Management
+      </mat-card-title>
+      <div class="header-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="openEmployeeDialog()"
+        >
+          <mat-icon>person_add</mat-icon>
+          New Employee
+        </button>
+      </div>
+    </mat-card-header>
+  </mat-card>
+
+  <!-- Employee Table -->
+  <mat-card class="employee-table-card">
+    <div class="table-container">
+      <table mat-table [dataSource]="employees" class="employee-table">
+        <!-- Employee Column -->
+        <ng-container matColumnDef="employee">
+          <th mat-header-cell *matHeaderCellDef>Employee</th>
+          <td mat-cell *matCellDef="let employee">
+            <div class="employee-info">
+              <img
+                [src]="employee.image || '/assets/images/default-avatar.png'"
+                [alt]="employee.full_name"
+                class="employee-avatar"
+                (error)="onImageError($event)"
+              />
+              <div class="employee-details">
+                <div class="employee-name">{{ employee.full_name }}</div>
+                <div class="employee-email">{{ employee.email }}</div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Department Column -->
+        <ng-container matColumnDef="department">
+          <th mat-header-cell *matHeaderCellDef>Department</th>
+          <td mat-cell *matCellDef="let employee">
+            <div class="department-info">
+              <mat-chip class="department-chip">{{
+                employee.department?.name || "No Department"
+              }}</mat-chip>
+              <div class="designation">{{ employee.designation }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Contact Column -->
+        <ng-container matColumnDef="contact">
+          <th mat-header-cell *matHeaderCellDef>Contact</th>
+          <td mat-cell *matCellDef="let employee">
+            <div class="contact-info">
+              <div class="phone">
+                <mat-icon>phone</mat-icon>
+                {{ employee.phone }}
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Joining Date Column -->
+        <ng-container matColumnDef="joining_date">
+          <th mat-header-cell *matHeaderCellDef>Joining Date</th>
+          <td mat-cell *matCellDef="let employee">
+            <div class="joining-date">
+              {{ employee.joining_date | date : "MMM dd, yyyy" }}
+              <div class="tenure">{{ getTenure(employee.joining_date) }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Tasks Column -->
+        <ng-container matColumnDef="tasks">
+          <th mat-header-cell *matHeaderCellDef>Active Tasks</th>
+          <td mat-cell *matCellDef="let employee">
+            <div class="task-count">
+              <mat-icon
+                [matBadge]="employee.active_task_count"
+                matBadgeColor="primary"
+                [matBadgeHidden]="employee.active_task_count === 0"
+              >
+                assignment
+              </mat-icon>
+              <span>{{ employee.active_task_count }} tasks</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let employee">
+            <button
+              mat-icon-button
+              (click)="viewEmployee(employee)"
+              title="View Details"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              (click)="editEmployee(employee)"
+              title="Edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="deleteEmployee(employee)"
+              title="Delete"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        [pageSizeOptions]="[10, 25, 50]"
+        showFirstLastButtons
+      ></mat-paginator>
+    </div>
+  </mat-card>
+
+  <!-- Empty State -->
+  @if(employees.length === 0){
+  <div class="empty-state">
+    <mat-icon>people_outline</mat-icon>
+    <h3>No Employees Found</h3>
+    <p>Add your first employee to get started</p>
+    <button mat-raised-button color="primary" (click)="openEmployeeDialog()">
+      <mat-icon>person_add</mat-icon>
+      Add Employee
+    </button>
+  </div>
+  }
+</div>
+
+<!-- Employee Dialog Template -->
+<ng-template #employeeDialogTemplate>
+  <div class="employee-dialog">
+    <h2 mat-dialog-title>
+      {{ editingEmployee ? "Edit Employee" : "Add New Employee" }}
+    </h2>
+
+    <form [formGroup]="employeeForm" (ngSubmit)="saveEmployee()">
+      <mat-dialog-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>First Name</mat-label>
+            <input
+              matInput
+              formControlName="first_name"
+              placeholder="Enter first name"
+            />
+            @if( employeeForm.get('first_name')?.hasError('required') ){
+            <mat-error> First name is required </mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Last Name</mat-label>
+            <input
+              matInput
+              formControlName="last_name"
+              placeholder="Enter last name"
+            />
+            @if(employeeForm.get('last_name')?.hasError('required')){
+            <mat-error> Last name is required </mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="Enter email address"
+          />
+          @if( employeeForm.get('email')?.hasError('required') ){
+          <mat-error> Email is required </mat-error>
+          } @if(employeeForm.get('email')?.hasError('email')){
+          <mat-error> Please enter a valid email </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Phone</mat-label>
+          <input
+            matInput
+            formControlName="phone"
+            placeholder="Enter phone number"
+          />
+          @if(employeeForm.get('phone')?.hasError('required')){
+          <mat-error> Phone is required </mat-error>
+          }
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Designation</mat-label>
+            <input
+              matInput
+              formControlName="designation"
+              placeholder="Enter designation"
+            />
+            @if(employeeForm.get('designation')?.hasError('required')){
+            <mat-error> Designation is required </mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Department</mat-label>
+            <mat-select formControlName="department_id">
+              @for(dept of departments;track dept.id){
+              <mat-option [value]="dept.id">
+                {{ dept.name }}
+              </mat-option>
+              } @empty{
+              <p>No Employee found.</p>
+              }
+            </mat-select>
+            @if(employeeForm.get('department_id')?.hasError('required')){
+            <mat-error> Department is required </mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Joining Date</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            formControlName="joining_date"
+          />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          @if( employeeForm.get('joining_date')?.hasError('required') ){
+          <mat-error> Joining date is required </mat-error>
+          }
+        </mat-form-field>
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end">
+        <button type="button" mat-button mat-dialog-close>Cancel</button>
+        <button
+          type="submit"
+          mat-raised-button
+          color="primary"
+          [disabled]="employeeForm.invalid || isLoading"
+        >
+          @if(isLoading){
+          <mat-spinner diameter="20"></mat-spinner>
+          }
+          {{ editingEmployee ? "Update" : "Add" }}
+        </button>
+      </mat-dialog-actions>
+    </form>
+  </div>
+</ng-template>
+
+<!-- Employee Detail Dialog Template -->
+<ng-template #employeeDetailTemplate>
+  <div class="employee-detail-dialog">
+    <h2 mat-dialog-title>Employee Details</h2>
+    @if(selectedEmployee){
+    <mat-dialog-content>
+      <div class="employee-profile">
+        <img
+          [src]="selectedEmployee.image || '/assets/images/default-avatar.png'"
+          [alt]="selectedEmployee.full_name"
+          class="profile-avatar"
+          (error)="onImageError($event)"
+        />
+
+        <div class="profile-info">
+          <h3>{{ selectedEmployee.full_name }}</h3>
+          <p class="designation">{{ selectedEmployee.designation }}</p>
+          <mat-chip class="department-chip">{{
+            selectedEmployee.department.name || "No Department"
+          }}</mat-chip>
+        </div>
+      </div>
+
+      <div class="detail-sections">
+        <div class="detail-section">
+          <h4><mat-icon>contact_mail</mat-icon> Contact Information</h4>
+          <div class="detail-item">
+            <span class="label">Email:</span>
+            <span class="value">{{ selectedEmployee.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Phone:</span>
+            <span class="value">{{ selectedEmployee.phone }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4><mat-icon>work</mat-icon> Work Information</h4>
+          <div class="detail-item">
+            <span class="label">Department:</span>
+            <span class="value">{{
+              selectedEmployee.department.name || "Not Assigned"
+            }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Joining Date:</span>
+            <span class="value">{{
+              selectedEmployee.joining_date | date : "fullDate"
+            }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Tenure:</span>
+            <span class="value">{{
+              getTenure(selectedEmployee.joining_date)
+            }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Active Tasks:</span>
+            <span class="value">{{ selectedEmployee.active_task_count }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-dialog-content>
+    } @if(!selectedEmployee){
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading employee details...</p>
+    </div>
+    }
+
+    <mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close>Close</button>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="editEmployeeFromDetail()"
+        [disabled]="!selectedEmployee"
+      >
+        <mat-icon>edit</mat-icon>
+        Edit Employee
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

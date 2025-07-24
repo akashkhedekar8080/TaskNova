@@ -1,0 +1,7 @@
+<mat-tab-group>
+  <mat-tab label="Task"> <app-task /></mat-tab>
+  @if(isAdmin){
+  <mat-tab label="Department"> <app-department /> </mat-tab>
+  <mat-tab label="Employee"> <app-employee /></mat-tab>
+  }
+</mat-tab-group>

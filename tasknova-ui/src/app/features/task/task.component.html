@@ -1,0 +1,262 @@
+<div class="task-container">
+  <mat-card class="task-header">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>task</mat-icon>
+        Task Management
+      </mat-card-title>
+      <div class="header-actions">
+        <button mat-icon-button (click)="refreshData()" title="Refresh Data">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        @if(canCreateTask){
+        <button mat-raised-button color="primary" (click)="openTaskDialog()">
+          <mat-icon>add</mat-icon>
+          New Task
+        </button>
+        }
+      </div>
+    </mat-card-header>
+  </mat-card>
+
+  <mat-card class="task-table-card">
+    <div class="table-container">
+      <table mat-table [dataSource]="tasks" class="task-table">
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let task">
+            <div class="task-title">
+              <strong>{{ task.title }}</strong>
+              <span class="task-description"
+                >{{ task.description | slice : 0 : 50 }}...</span
+              >
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Employee Column -->
+        <ng-container matColumnDef="employee">
+          <th mat-header-cell *matHeaderCellDef>Assigned To</th>
+          <td mat-cell *matCellDef="let task">
+            <div class="employee-info">
+              <img
+                [src]="
+                  task.employee?.image || '/assets/images/default-avatar.png'
+                "
+                [alt]="task.employee_name || 'No employee'"
+                class="employee-avatar"
+                (error)="onImageError($event)"
+              />
+              <div>
+                <div class="employee-name">
+                  {{ task.employee_name || "Unassigned" }}
+                </div>
+                <div class="department-name">
+                  {{ task.department_name || "No Department" }}
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let task">
+            @if (canUpdateTaskStatus(task)) {
+            <mat-select
+              [value]="task.status"
+              (selectionChange)="updateTaskStatus(task, $event.value)"
+              class="status-select"
+            >
+              <mat-option value="todo">
+                <mat-chip class="status-cancelled">Todo</mat-chip>
+              </mat-option>
+              <mat-option value="in_progress">
+                <mat-chip class="status-in_progress">In Progress</mat-chip>
+              </mat-option>
+              <mat-option value="on_hold">
+                <mat-chip class="status-pending">On Hold</mat-chip>
+              </mat-option>
+              <mat-option value="done">
+                <mat-chip class="status-completed">Done</mat-chip>
+              </mat-option>
+            </mat-select>
+            } @else {
+            <mat-chip [class]="'status-' + task.status">
+              {{ getStatusLabel(task.status) }}
+            </mat-chip>
+            }
+          </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let task">
+            <mat-chip [class]="'priority-' + task.priority">
+              {{ getPriorityLabel(task.priority) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Due Date Column -->
+        <ng-container matColumnDef="due_date">
+          <th mat-header-cell *matHeaderCellDef>Due Date</th>
+          <td mat-cell *matCellDef="let task">
+            <div class="due-date" [class.overdue]="isOverdue(task.due_date)">
+              {{ task.due_date | date : "MMM dd, yyyy" }}
+              @if(isOverdue(task.due_date)){
+              <mat-icon class="overdue-icon">warning</mat-icon>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Story Points Column -->
+        <ng-container matColumnDef="story_points">
+          <th mat-header-cell *matHeaderCellDef>Story Points</th>
+          <td mat-cell *matCellDef="let task">
+            <div class="story-points">
+              <span class="estimated">{{ task.estimated_sp }}</span>
+              @if(task.actual_sp){
+              <span class="actual"> / {{ task.actual_sp }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        @if(canManageTasks) {
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let task">
+            <button mat-icon-button (click)="editTask(task)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteTask(task)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        }@else{
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let task">
+            <button mat-icon-button (click)="editTask(task)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        }
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+  </mat-card>
+</div>
+
+<!-- Task Dialog Template -->
+<ng-template #taskDialogTemplate>
+  <div class="task-dialog">
+    <h2 mat-dialog-title>
+      {{ editingTask ? "Edit Task" : "Create New Task" }}
+    </h2>
+
+    <form [formGroup]="taskForm" (ngSubmit)="saveTask()">
+      <mat-dialog-content>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Title</mat-label>
+          <input
+            matInput
+            formControlName="title"
+            placeholder="Enter task title"
+          />
+          @if( taskForm.get('title')?.hasError('required') ){
+          <mat-error> Title is required </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="3"
+            placeholder="Enter task description"
+          ></textarea>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select formControlName="priority">
+              <mat-option value="low">Low</mat-option>
+              <mat-option value="medium">Medium</mat-option>
+              <mat-option value="high">High</mat-option>
+              <mat-option value="urgent">Urgent</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Story Points</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="estimated_sp"
+              min="1"
+            />
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Due Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="picker"
+              formControlName="due_date"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="picker"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Assign to Employee</mat-label>
+            <mat-select formControlName="employee_id">
+              @for(employee of employees; track employee.id){
+              <mat-option [value]="employee.id">
+                {{ employee.full_name }} - {{ employee.designation }}
+              </mat-option>
+              } @empty{
+              <p>No Task found.</p>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end">
+        <button type="button" mat-button mat-dialog-close>Cancel</button>
+        <button
+          type="submit"
+          mat-raised-button
+          color="primary"
+          [disabled]="taskForm.invalid || isLoading"
+        >
+          @if(isLoading){
+          <mat-spinner diameter="20"></mat-spinner>
+          }
+
+          {{ editingTask ? "Update" : "Create" }}
+        </button>
+      </mat-dialog-actions>
+    </form>
+  </div>
+</ng-template>

@@ -1,0 +1,160 @@
+<div class="department-container">
+  <mat-card class="department-header">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>business</mat-icon>
+        Department Management
+      </mat-card-title>
+      <div class="header-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="openDepartmentDialog()"
+        >
+          <mat-icon>add</mat-icon>
+          New Department
+        </button>
+      </div>
+    </mat-card-header>
+  </mat-card>
+
+  <!-- Department Cards View -->
+  <div class="department-grid">
+    @for(dept of departments;track dept.id){
+    <mat-card class="department-card" [class.inactive]="!dept.is_active">
+      <mat-card-header>
+        <mat-card-title>
+          {{ dept.name }}
+          @if (!dept.is_active){
+          <mat-chip class="inactive-chip">Inactive</mat-chip>
+          }
+        </mat-card-title>
+        <mat-card-subtitle>{{ dept.slug }}</mat-card-subtitle>
+        <div class="card-actions">
+          <button mat-icon-button (click)="editDepartment(dept)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteDepartment(dept)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p class="department-description">{{ dept.description }}</p>
+
+        <div class="department-stats">
+          <div class="stat-item">
+            <mat-icon>people</mat-icon>
+            <span
+              class="stat-value"
+              [matBadge]="dept.employee_count"
+              matBadgeColor="primary"
+            >
+              Employees
+            </span>
+          </div>
+
+          <div class="stat-item">
+            <mat-icon>schedule</mat-icon>
+            <span class="stat-value"
+              >Created: {{ dept.created_at | date : "MMM yyyy" }}</span
+            >
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button mat-button color="primary" (click)="viewEmployees(dept)">
+          <mat-icon>people</mat-icon>
+          View Employees
+        </button>
+        <button mat-button (click)="toggleStatus(dept)">
+          <mat-icon>{{
+            dept.is_active ? "visibility_off" : "visibility"
+          }}</mat-icon>
+          {{ dept.is_active ? "Deactivate" : "Activate" }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+    }@empty{
+    <p>No Department found.</p>
+    }
+  </div>
+
+  <!-- Empty State -->
+  @if(departments.length === 0){
+  <div class="empty-state">
+    <mat-icon>business</mat-icon>
+    <h3>No Departments Found</h3>
+    <p>Create your first department to get started</p>
+    <button mat-raised-button color="primary" (click)="openDepartmentDialog()">
+      <mat-icon>add</mat-icon>
+      Create Department
+    </button>
+  </div>
+  }
+</div>
+
+<!-- Department Dialog Template -->
+<ng-template #departmentDialogTemplate>
+  <div class="department-dialog">
+    <h2 mat-dialog-title>
+      {{ editingDepartment ? "Edit Department" : "Create New Department" }}
+    </h2>
+
+    <form [formGroup]="departmentForm" (ngSubmit)="saveDepartment()">
+      <mat-dialog-content>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Department Name</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            placeholder="Enter department name"
+          />
+          @if(departmentForm.get('name')?.hasError('required')){
+          <mat-error> Department name is required </mat-error>
+          } @if(departmentForm.get('name')?.hasError('minlength')){
+          <mat-error> Name must be at least 2 characters </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="4"
+            placeholder="Enter department description"
+          ></textarea>
+          @if(departmentForm.get('description')?.hasError('required')){
+          <mat-error> Description is required </mat-error>
+          }
+        </mat-form-field>
+        @if(editingDepartment){
+        <div class="form-toggle">
+          <mat-slide-toggle formControlName="is_active">
+            Department Active
+          </mat-slide-toggle>
+        </div>
+        }
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end">
+        <button type="button" mat-button mat-dialog-close>Cancel</button>
+        <button
+          type="submit"
+          mat-raised-button
+          color="primary"
+          [disabled]="departmentForm.invalid || isLoading"
+        >
+          @if(isLoading){
+          <mat-spinner diameter="20"></mat-spinner>
+          }
+
+          {{ editingDepartment ? "Update" : "Create" }}
+        </button>
+      </mat-dialog-actions>
+    </form>
+  </div>
+</ng-template>

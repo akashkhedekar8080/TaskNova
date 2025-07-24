@@ -1,0 +1,129 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title>Register</mat-card-title>
+      <mat-card-subtitle>Create your account</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <div class="name-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Username</mat-label>
+            <input
+              matInput
+              type="text"
+              formControlName="username"
+              placeholder="username"
+            />
+            <mat-icon matSuffix>person</mat-icon>
+            @if( registerForm.get('username')?.invalid &&
+            registerForm.get('username')?.touched){
+            <mat-error>
+              {{ getErrorMessage("username") }}
+            </mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="your@email.com"
+          />
+          <mat-icon matSuffix>email</mat-icon>
+          @if( registerForm.get('email')?.invalid &&
+          registerForm.get('email')?.touched){
+          <mat-error>
+            {{ getErrorMessage("email") }}
+          </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Enter password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="'Hide password'"
+            type="button"
+          >
+            <mat-icon>{{
+              hidePassword ? "visibility_off" : "visibility"
+            }}</mat-icon>
+          </button>
+          @if( registerForm.get('password')?.invalid &&
+          registerForm.get('password')?.touched){
+          <mat-error>
+            {{ getErrorMessage("password") }}
+          </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirm Password</mat-label>
+          <input
+            matInput
+            [type]="hideConfirmPassword ? 'password' : 'text'"
+            formControlName="confirmPassword"
+            placeholder="Confirm password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            (click)="hideConfirmPassword = !hideConfirmPassword"
+            [attr.aria-label]="'Hide confirm password'"
+            type="button"
+          >
+            <mat-icon>{{
+              hideConfirmPassword ? "visibility_off" : "visibility"
+            }}</mat-icon>
+          </button>
+          @if( (registerForm.get('confirmPassword')?.invalid &&
+          registerForm.get('confirmPassword')?.touched) ||
+          registerForm.hasError('passwordMismatch')){
+          <mat-error>
+            {{ getErrorMessage("confirmPassword") }}
+          </mat-error>
+          }
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            class="full-width"
+            [disabled]="isLoading"
+          >
+            @if(isLoading){
+            <mat-spinner diameter="20"></mat-spinner>
+
+            }@else {
+            <span>Register</span>
+
+            }
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <div class="auth-links">
+        <button mat-button color="accent" (click)="navigateToLogin()">
+          Already have an account? Login
+        </button>
+      </div>
+    </mat-card-actions>
+  </mat-card>
+</div>
