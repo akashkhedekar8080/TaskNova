@@ -215,6 +215,7 @@ export class TaskComponent implements OnInit {
           this.snackBar.open("Failed to save task", "Close", {
             duration: 3000,
           });
+          this.isLoading = false;
         },
         complete: () => (this.isLoading = false),
       });

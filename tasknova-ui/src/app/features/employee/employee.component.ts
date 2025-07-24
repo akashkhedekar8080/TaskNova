@@ -152,10 +152,12 @@ export class EmployeeComponent implements OnInit {
               this.loadEmployees();
               this.dialog.closeAll();
             },
-            error: () =>
+            error: () => {
               this.snackBar.open("Failed to update employee", "Close", {
                 duration: 3000,
-              }),
+              });
+              this.isLoading = false;
+            },
             complete: () => (this.isLoading = false),
           });
       } else {
@@ -167,10 +169,13 @@ export class EmployeeComponent implements OnInit {
             this.loadEmployees();
             this.dialog.closeAll();
           },
-          error: () =>
+          error: () => {
             this.snackBar.open("Failed to add employee", "Close", {
               duration: 3000,
-            }),
+            });
+            this.isLoading = false;
+          },
+
           complete: () => (this.isLoading = false),
         });
       }

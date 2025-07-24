@@ -119,10 +119,13 @@ export class DepartmentComponent implements OnInit {
               this.loadDepartments();
               this.dialog.closeAll();
             },
-            error: () =>
+            error: () => {
               this.snackBar.open("Failed to update department", "Close", {
                 duration: 3000,
-              }),
+              });
+              this.isLoading = false;
+            },
+
             complete: () => (this.isLoading = false),
           });
       } else {
@@ -134,10 +137,13 @@ export class DepartmentComponent implements OnInit {
             this.loadDepartments();
             this.dialog.closeAll();
           },
-          error: () =>
+          error: () => {
             this.snackBar.open("Failed to create department", "Close", {
               duration: 3000,
-            }),
+            });
+            this.isLoading = false;
+          },
+
           complete: () => (this.isLoading = false),
         });
       }

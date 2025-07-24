@@ -7,19 +7,28 @@ import { catchError, switchMap, throwError } from "rxjs";
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const authService = inject(AuthService);
+
+  // Skip interception for refresh token request to avoid infinite loops
+  if (req.url.includes("/refresh-token")) {
+    return next(req);
+  }
+
+  let isRefreshing = false;
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       let errorMessage = "An unexpected error occurred";
 
       switch (error.status) {
         case 401:
-          // Try to refresh token first before logging out
           const authToken = authService.getAccessToken();
-          if (authToken) {
+          // Only attempt refresh if we have a token and not already refreshing
+          if (authToken && !isRefreshing) {
+            isRefreshing = true;
             return authService.refreshToken().pipe(
               switchMap((refreshSuccess: boolean) => {
+                isRefreshing = false;
                 if (refreshSuccess) {
-                  // Retry the original request with the new token
                   const newToken = authService.getAccessToken();
                   const retryReq = req.clone({
                     setHeaders: {
@@ -39,7 +48,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
                   }));
                 }
               }),
-              catchError(() => {
+              catchError((refreshError) => {
+                isRefreshing = false;
                 // Refresh failed, logout user
                 errorMessage = "Session expired. Please log in again";
                 authService.performLogout();
@@ -47,11 +57,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
                 return throwError(() => ({
                   message: errorMessage,
                   status: error.status,
-                  originalError: error,
+                  originalError: refreshError,
                 }));
               })
             );
           } else {
+            // No token or already refreshing - just logout
             errorMessage = "Please log in to continue";
             authService.performLogout();
             router.navigate(["/login"]);
