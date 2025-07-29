@@ -60,7 +60,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return task
 
     def update(self, instance, validated_data):
-        department_id = validated_data.pop("employee_id", None)
+        department_id = validated_data.pop("department_id", None)
         if department_id:
             try:
                 department = Department.objects.get(id=department_id)
